@@ -10,12 +10,12 @@ static let setOnShortcut = "Your Unlock Shortcut"
 static let setOffShortcut = "Your Lock Shortcut"
 ```
 
-2. Run installation:
+2. Run the install script:
 ```bash
 ./install.sh
 ```
 
-## Manual Commands
+## Useful commands
 
 ```bash
 # View logs
