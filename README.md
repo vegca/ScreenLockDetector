@@ -5,12 +5,14 @@ macOS service that executes Shortcuts based on screen lock/unlock events.
 ## Setup
 
 1. Edit `ScreenLockDetector.swift` and update:
+
 ```swift
 static let setOnShortcut = "Your Unlock Shortcut"
 static let setOffShortcut = "Your Lock Shortcut"
 ```
 
 2. Run the install script:
+
 ```bash
 ./install.sh
 ```

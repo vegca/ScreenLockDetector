@@ -10,7 +10,8 @@ import Foundation
 import os.log
 
 // MARK: - Configuration
-struct Configuration {
+
+enum Configuration {
     static let executionDelay: TimeInterval = 2.0
     static let maxRetries = 3
     static let retryInterval: TimeInterval = 5.0
@@ -19,11 +20,12 @@ struct Configuration {
     static let setOnShortcut = "Your Unlock Shortcut"
     static let setOffShortcut = "Your Lock Shortcut"
 
-    // Logging
+    /// Logging
     static let enableLogging = true
 }
 
 // MARK: - Logger
+
 class Logger {
     private static let subsystem = "screen-lock-detector"
     private static let logger = os.Logger(subsystem: subsystem, category: "main")
@@ -43,6 +45,7 @@ class Logger {
 }
 
 // MARK: - System State Manager
+
 class SystemState {
     private var lastState: String = "unknown"
     private var isExecutingCommand = false
@@ -51,31 +54,31 @@ class SystemState {
 
     func processEvent(_ event: String, action: @escaping () -> Void) {
         queue.async { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
 
             // Avoid duplicate events
-            if self.lastState == event {
+            if lastState == event {
                 Logger.log("[WARN] Duplicate event ignored: \(event)", type: .debug)
                 return
             }
 
             // Avoid rapid executions (debouncing)
-            if let lastExec = self.lastExecution,
-                Date().timeIntervalSince(lastExec) < 1.0
+            if let lastExec = lastExecution,
+               Date().timeIntervalSince(lastExec) < 1.0
             {
                 Logger.log("[DEBOUNCE] Event too recent, ignoring", type: .debug)
                 return
             }
 
             // Avoid concurrent executions
-            if self.isExecutingCommand {
+            if isExecutingCommand {
                 Logger.log("[BUSY] Command in progress, ignoring...", type: .debug)
                 return
             }
 
-            self.isExecutingCommand = true
-            self.lastState = event
-            self.lastExecution = Date()
+            isExecutingCommand = true
+            lastState = event
+            lastExecution = Date()
 
             // Configurable delay with async execution
             if Configuration.executionDelay > 0 {
@@ -87,13 +90,14 @@ class SystemState {
                 }
             } else {
                 action()
-                self.isExecutingCommand = false
+                isExecutingCommand = false
             }
         }
     }
 }
 
 // MARK: - Shortcut Executor
+
 class ShortcutExecutor {
     static func execute(_ shortcutName: String, attempt: Int = 1) {
         let queue = DispatchQueue.global(qos: .utility)
@@ -125,10 +129,12 @@ class ShortcutExecutor {
                         if attempt < Configuration.maxRetries {
                             Logger.log(
                                 "[ERROR] Error executing \(shortcutName): \(errorString)",
-                                type: .error)
+                                type: .error
+                            )
                             Logger.log(
                                 "[RETRY] Retrying (attempt \(attempt + 1)/\(Configuration.maxRetries))",
-                                type: .info)
+                                type: .info
+                            )
 
                             DispatchQueue.global(qos: .utility).asyncAfter(
                                 deadline: .now() + Configuration.retryInterval
@@ -138,13 +144,15 @@ class ShortcutExecutor {
                         } else {
                             Logger.log(
                                 "[FAIL] Permanent failure after \(Configuration.maxRetries) attempts: \(shortcutName)",
-                                type: .error)
+                                type: .error
+                            )
                         }
                     }
                 } catch {
                     Logger.log(
                         "[CRITICAL] Critical error executing \(shortcutName): \(error.localizedDescription)",
-                        type: .fault)
+                        type: .fault
+                    )
                 }
             }
         }
@@ -152,6 +160,7 @@ class ShortcutExecutor {
 }
 
 // MARK: - Screen Lock Monitor
+
 class ScreenLockMonitor {
     private let systemState = SystemState()
     private let notificationCenter = DistributedNotificationCenter.default()
@@ -248,5 +257,6 @@ class ScreenLockMonitor {
 }
 
 // MARK: - Entry Point
+
 let monitor = ScreenLockMonitor()
 monitor.start()

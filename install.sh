@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+set -eu
 
 SERVICE_NAME="screen-lock-detector"
 PLIST_ID="$USER.screen-lock-detector"
@@ -9,14 +10,15 @@ echo "Creating directory..."
 mkdir -p "$INSTALL_DIR"
 
 echo "Compiling..."
-swiftc -O -whole-module-optimization -o $SERVICE_NAME ScreenLockDetector.swift
+swiftc -O -whole-module-optimization -o "$SERVICE_NAME" ScreenLockDetector.swift
 
 echo "Installing binary..."
-cp $SERVICE_NAME "$INSTALL_DIR/"
+cp "$SERVICE_NAME" "$INSTALL_DIR/"
 chmod 755 "$INSTALL_DIR/$SERVICE_NAME"
 
 echo "Creating plist..."
-cat > "$PLIST_FILE" << EOF
+mkdir -p "$HOME/Library/LaunchAgents"
+cat >"$PLIST_FILE" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -44,8 +46,8 @@ cat > "$PLIST_FILE" << EOF
 EOF
 
 echo "Loading service..."
-launchctl unload "$PLIST_FILE" 2>/dev/null
+launchctl unload "$PLIST_FILE" 2>/dev/null || true
 launchctl load "$PLIST_FILE"
 
 echo "Done! Service status:"
-launchctl list | grep $PLIST_ID
+launchctl list | grep "$PLIST_ID"
